@@ -1,0 +1,92 @@
+% \documentclass{article}
+% \usepackage{tikz}
+% \usetikzlibrary{decorations.pathmorphing, positioning, arrows.meta, patterns, calc, decorations.markings}
+%
+% \begin{document}
+
+\tikzset{
+  % Remove unused pic definitions to avoid spurious text
+}
+
+\begin{tikzpicture}[
+    mass/.style={draw, rectangle, minimum width=1.5cm, minimum height=1cm, fill=gray!20},
+    force/.style={-{Stealth[length=8pt]}, thick, red},
+]
+
+% Mass nodes
+\node[mass] (M1) at (2,0) {$M_1$};
+\node[mass] (M2) at (6,0) {$M_2$};
+\node[mass] (M3) at (10,0) {$M_3$};
+
+% Spring K₁ between M₁ and M₂
+% No pic - draw directly connected to masses
+\draw[thick] (M1.east) -- ++(0.5,0);
+\draw[decoration={zigzag, segment length=4pt, amplitude=3pt}, decorate, thick]
+      ([xshift=0.5cm]M1.east) -- ([xshift=-0.5cm]M2.west);
+\draw[thick] ([xshift=-0.5cm]M2.west) -- (M2.west);
+\node[above] at (4,0.55) {$K_1$};
+
+% Damper B₁ between M₁ and M₂ (offset down) - draw directly connected
+\draw[thick] ([yshift=-0.4cm]M1.east) -- ++(0.95cm,0);
+% Damper symbol
+\draw[thick] ([xshift=0.95cm,yshift=-0.6cm]M1.east) -- ++(0,0.4);     % outer vertical
+\draw[thick] ([xshift=0.95cm,yshift=-0.2cm]M1.east) -- ++(0.2,0);  % upper outer horiz
+\draw[thick] ([xshift=0.95cm,yshift=-0.6cm]M1.east) -- ++(0.2,0);  % lower outer horiz
+\draw[thick] ([xshift=1.05cm,yshift=-0.525cm]M1.east) -- ++(0,0.25);   % inner vertical
+% right horiz connector
+\draw[thick] ([xshift=1.05cm,yshift=-0.4cm]M1.east)  -- ([yshift=-0.4cm]M2.west);
+\node[below] at (4,-0.6) {$B_1$};
+
+% Spring K₂ between M₂ and M₃
+\draw[thick] (M2.east) -- ++(0.5,0);
+\draw[decoration={zigzag, segment length=4pt, amplitude=3pt}, decorate, thick]
+      ([xshift=0.5cm]M2.east) -- ([xshift=-0.5cm]M3.west);
+\draw[thick] ([xshift=-0.5cm]M3.west) -- (M3.west);
+\node[above] at (8,0.3) {$K_2$};
+
+% Damper B₃ from M₃ to ground (centered on M3)
+\draw[thick] (M3.east) -- ++(0.65cm,0);
+% Damper symbol
+\draw[thick] ([xshift=0.65cm,yshift=-0.2cm]M3.east) -- ++(0,0.4);     % outer vertical
+\draw[thick] ([xshift=0.65cm,yshift=0.2cm]M3.east) -- ++(0.2,0);  % upper outer horiz
+\draw[thick] ([xshift=0.65cm,yshift=-0.2cm]M3.east) -- ++(0.2,0);  % lower outer horiz
+\draw[thick] ([xshift=0.75cm,yshift=-0.125cm]M3.east) -- ++(0,0.25);   % inner vertical
+% right horiz connector to ground
+\draw[thick] ([xshift=0.75cm]M3.east) -- (12.3,0);
+
+% Ground at right (skin) - vertical line with hatching to the right
+\draw[thick] (12.3,-0.5) -- (12.3,0.5);
+\node[fill,pattern=north east lines,draw=none,minimum width=0.3cm,minimum height=0.8cm] at (12.45,0) {};
+\node[below] at (11.6,-0.4) {$B_3$};
+
+% Position indicators - vertical lines from upper left corners with horizontal arrows
+% x₁
+\draw[thick] (M1.north west) -- ++(0,0.8);
+\draw[-{Stealth[length=6pt]}, thick] ([yshift=0.8cm]M1.north west) -- ++(0.4,0);
+\node[right] at ([xshift=0.4cm,yshift=0.8cm]M1.north west) {$x_1, \dot{x}_1, \ddot{x_1}$};
+
+% x₂
+\draw[thick] (M2.north west) -- ++(0,0.8);
+\draw[-{Stealth[length=6pt]}, thick] ([yshift=0.8cm]M2.north west) -- ++(0.4,0);
+\node[right] at ([xshift=0.4cm,yshift=0.8cm]M2.north west) {$x_2, \dot{x}_2, \ddot{x_2}$};
+
+% x₃
+\draw[thick] (M3.north west) -- ++(0,0.8);
+\draw[-{Stealth[length=6pt]}, thick] ([yshift=0.8cm]M3.north west) -- ++(0.4,0);
+\node[right] at ([xshift=0.4cm,yshift=0.8cm]M3.north west) {$x_3, \dot{x}_3, \ddot{x_3}$};
+
+% f(t) force arrows
+\draw[thick, blue, -{Stealth[length=6pt]}] ([xshift= 0.75cm,yshift=0.3cm]M1.east) -- ([xshift=0.0cm,yshift=0.3cm]M1.east);
+\draw[thick, blue, -{Stealth[length=6pt]}] ([xshift=-0.75cm,yshift=0.3cm]M2.west) -- ([yshift=0.3cm]M2.west);
+\node[left, blue] at (4.4,0.3) {$f(t)$};
+
+% Bottom labels
+\node[below] at (3,-1.7) {LRA};
+\draw[thick, red, dashed]  (5,-1.) -- (5,-3);
+\node[below] at (6,-1.7) {Case};
+\draw[thick, red, dashed]  (7.5,-1.) -- (7.5,-3);
+\node[below] at (9.5,-1.7) {Skin};
+
+\end{tikzpicture}
+
+% \end{document}
