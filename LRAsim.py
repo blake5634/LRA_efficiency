@@ -146,11 +146,11 @@ def EnergyFlows(yp,U,d):
     # print(f'EnergyFLows:\n   Energy integration: {intmeth}')
     # print(f'    (time range: last {100*timerange}%)')
 
-    return (eso, eca, elm, eld, ebs, Etot)
+    return (eso, eca, elm, eld, ebs, esk1, Etot)
 
 
 
-def LeakReport(eso, eca, elm, eld, ebs, Etot,yp):
+def LeakReport(eso, eca, elm, eld, ebs, esk1, Etot,yp):
     # for forced_response
     x1  =  yp[0][:]   # MKS to mm
     x3  =  yp[4][:]
@@ -168,7 +168,7 @@ def LeakReport(eso, eca, elm, eld, ebs, Etot,yp):
     print(f'   LRA dissipation (eld): {eld:.3e}')
     print(f'  skin dissipation (ebs): {ebs:.3e}')
     print(f'                   total: {eld+ebs:.3e}\n')
-
+    print(f'   output to skin (esk1): {esk1}')
     print(f'kinetic+potential (Etot): {Etot:.3e}')
 
 

@@ -19,8 +19,8 @@ TRAPEZOIDAL = LRA.TRAPEZOIDAL  # numerical integration method for energy
 
 # Set scan parameters
 
-nwn =   9       # ODD number!!
-nzet =  9
+nwn =   11     # ODD number!!
+nzet =  11
 fres = 150 # hz
 wres = 2*np.pi*fres
 
@@ -29,12 +29,14 @@ if nwn%2 != 1:
 
 # data about this study
 #
-studyNameLegends = {'plot':'StudyPlot', 'leakage':'Energy Leakage (%)',
+studyNameLegends = {'plot':'StudyPlot',
+                    'leakage':'Energy Leakage (%)',
                     'eout':'Actuator Energy Output (J)',
-                    'SkinE':'Energy to Skin (J)',
-                    'ee':'Energy Efficiency',
+                    'ebs':'Skin Damper Dissipation (J)',
+                    'esk1':'Energy to Skin (J)',
+                    'ee':'Energy Efficiency (%)',
                     'gain':'Amplitude Ratio (x3/x1)',
-                    'fgain':'Skin amplitude / LRA force'}
+                    'fgain':'Skin amplitude / LRA force' }
 
 
 studykeys = studyNameLegends.keys()
@@ -122,7 +124,7 @@ if sd['studytype']=='plot':
 def RepHeatmap(wn,z, fd, heat):
     print(f'{wn:10.2f}, {z:10.5f}, {heat:.3e}', file=fd)
 
-def Report2(wn,z, fd, eso, eca, elm, eld, ebs, Etot,yp):
+def Report2(wn,z, fd, eso, eca, elm, eld, ebs, esk1, Etot,yp):
     leakage = eso-(eld+ebs)
     plk = 100*leakage/eso
     print(f'{wn:10.2f}, {z:10.5f}, {eso:.3e}, {leakage:.3e}, {plk:8.1f}', file=fd)
@@ -261,8 +263,10 @@ for w in wVals:
         tp, yp = ctl.forced_response(sys, T, U)
 
         # compute the energy flows etc.
-        #
-        eso, eca, elm, eld, ebs, Etot = LRA.EnergyFlows(yp,U,dpar)
+        # return (eso, eca, elm, eld, ebs, Etot)
+        # return (eso, eca, elm, eld, ebs, esk1, Etot)
+
+        eso, eca, elm, eld, ebs, esk1, Etot = LRA.EnergyFlows(yp,U,dpar)
         w_norm = w/wres
         leakage = eso-(eld+ebs)
         a1,a2,a3 = LRA.Amplitudes(yp,U,dpar)
@@ -275,13 +279,15 @@ for w in wVals:
         if sd['studytype'] == 'fgain':
             heatDataPt = a3/np.max(U)    #  skin amplitude / LRA force
         if sd['studytype'] == 'ee':
-            heatDataPt = 100 * ebs/eso
+            heatDataPt = 100 * ebs/eso  # skin damper diss / actuator source output
         if sd['studytype'] == 'leakage':
             heatDataPt = plk
         if sd['studytype'] == 'eout':
             heatDataPt = eso
-        if sd['studytype'] == 'SkinE':
+        if sd['studytype'] == 'ebs':
             heatDataPt = ebs
+        if sd['studytype'] == 'esk1':
+            heatDataPt = esk1
         RepHeatmap(w_norm, zetaLRA, dataf, heatDataPt)
 
 print('output map:', fname)
