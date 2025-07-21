@@ -36,7 +36,9 @@ studyNameLegends = {'plot':'StudyPlot',
                     'esk1':'Energy to Skin (J)',
                     'ee':'Energy Efficiency (%)',
                     'gain':'Amplitude Ratio (x3/x1)',
-                    'fgain':'Skin amplitude / LRA force' }
+                    'fgain':'Skin amplitude / LRA force',
+                    'emel':'Motor Electric Loss (J)'
+                        }
 
 
 studykeys = studyNameLegends.keys()
@@ -124,14 +126,11 @@ if sd['studytype']=='plot':
 def RepHeatmap(wn,z, fd, heat):
     print(f'{wn:10.2f}, {z:10.5f}, {heat:.3e}', file=fd)
 
-def Report2(wn,z, fd, eso, eca, elm, eld, ebs, esk1, Etot,yp):
+def Report2(wn,z, fd, eso, eca, elm, eld, ebs, esk1, emel, Etot, yp):
     leakage = eso-(eld+ebs)
     plk = 100*leakage/eso
     print(f'{wn:10.2f}, {z:10.5f}, {eso:.3e}, {leakage:.3e}, {plk:8.1f}', file=fd)
 
-#
-# wVals   = np.geomspace(0.95*wres, 1.05*wres, num=nwn, endpoint=True)
-# zetaVals = np.geomspace(0.01, 1.0, num=nzet, endpoint=True)
 
 wVals    = np.linspace(0.95*wres, 1.05*wres, num=nwn, endpoint=True)
 zetaVals = np.linspace(0.01,            1.0, num=nzet, endpoint=True)
@@ -146,7 +145,7 @@ T = np.arange(0,Tmax,dt)
 npts = len(T)
 
 ncontact = 4  # four fingers touching (x4 skin model)
-Ain = 1  # input amplitude (N)
+Ain = 1.0  # input amplitude (N)
 
 
 fname = f'heatmap_{sd['studytype']}_{nwn}x{nzet}.csv'
@@ -186,7 +185,13 @@ for w in wVals:
         #
 
         # LRA properties
-        M1 = 0.005 # kg   ()
+        Rm = 27.0  # Ohms
+        Km = 1.0   # Newtons/Amp
+        dpar['Km'] = Km
+        dpar['Rm'] = Rm
+
+        # M1 = 0.005 # kg   ()
+        M1 = 0.0014 # kg (Lindsay et al 2013)
         dpar['M1'] = M1
         # B1 = 0.03222  # Nsec/m
         K1 = w**2 * M1
@@ -262,11 +267,15 @@ for w in wVals:
         #
         tp, yp = ctl.forced_response(sys, T, U)
 
+        #
+        #  RMS skin displ at resonance
+        #
+        if w == wres and zetaLRA == zetaVals[0]:  # at peak resonance
+            _,_,x3RMS = LRA.RMSDisps(yp,U,dpar)
+        #
         # compute the energy flows etc.
-        # return (eso, eca, elm, eld, ebs, Etot)
-        # return (eso, eca, elm, eld, ebs, esk1, Etot)
-
-        eso, eca, elm, eld, ebs, esk1, Etot = LRA.EnergyFlows(yp,U,dpar)
+        #
+        eso, eca, elm, eld, ebs, esk1, emel, Etot = LRA.EnergyFlows(yp,U,dpar)
         w_norm = w/wres
         leakage = eso-(eld+ebs)
         a1,a2,a3 = LRA.Amplitudes(yp,U,dpar)
@@ -288,6 +297,9 @@ for w in wVals:
             heatDataPt = ebs
         if sd['studytype'] == 'esk1':
             heatDataPt = esk1
+        if sd['studytype'] == 'emel':
+            print('emel: ', emel)
+            heatDataPt = emel
         RepHeatmap(w_norm, zetaLRA, dataf, heatDataPt)
 
 print('output map:', fname)
@@ -296,5 +308,8 @@ dataf.close()
 print(f'Studytype: {sd["studytype"]}   legend: {sd["legend"]}')
 print('Normalized Omega values: ', np.linspace(0.95, 1.05, num=nwn, endpoint=True)
 )
+
+print('RMS Skin displacement at resonance (m):',f'{x3RMS:.3e}')
+
 hm.hmap(fname, studytype=sd['studytype'], legend=sd['legend'])
 

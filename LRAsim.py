@@ -32,12 +32,12 @@ def RMS(x,tr):
     return np.sqrt(np.mean(x**2))
 
 
-def integrate(x,xm1):
+def integrate(x, xm1, dt):
     if TRAPEZOIDAL:
-        v =  0.5*(x+xm1)
+        v =  0.5*(x+xm1) * dt
         return v
-    else:
-        return x
+    else:  # rectangular int.
+        return x * dt
 
 timerange = 0.25  # percent data for energy analysis (from end)
 
@@ -58,6 +58,21 @@ def Amplitudes(yp,U,d):
     return a1,a2,a3
 
 
+def RMSDisps(yp,U,d):
+    # for forced_response
+    x1  =  yp[0][:]   # MKS to mm
+    xd1 =  yp[1][:]   # MKS to mm
+    x2  =  yp[2][:]
+    xd2 =  yp[3][:]
+    x3  =  yp[4][:]
+    xd3 =  yp[5][:]
+
+    a1 = np.sqrt(np.mean(x1**2))
+    a2 = np.sqrt(np.mean(x2**2))
+    a3 = np.sqrt(np.mean(x3**2))
+    return a1,a2,a3
+
+
 
 def EnergyFlows(yp,U,d):
     # for forced_response
@@ -75,9 +90,10 @@ def EnergyFlows(yp,U,d):
     elm = 0.0  # einput to LRA mass
     ebs = 0.0  # skin damping dissipation
     esk1 = 0.0  # e output to skin
+    emel = 0.0  # energy loss in motor resistance
 
     # delayed energy values for trapezoidal integration
-    deld = {'eso':0, 'eld':0,'eca':0,'elm':0,'ebs':0,'esk1':0}
+    deld = {'eso':0, 'eld':0,'eca':0,'elm':0,'ebs':0,'esk1':0,'emel':0}
 
 
 
@@ -86,7 +102,20 @@ def EnergyFlows(yp,U,d):
     indecesSelected = range(start,end,1)
 
 
+    last_emel = 0.0
+
+    k=-1
     for i in indecesSelected:
+        k+=1
+
+        # print('\n',k)
+        # motor electrical loss (i^2R)
+        f = U[i]
+        im = (1/d['Km'])*f
+        pm = im*im*d['Rm']
+        emel += integrate(pm, last_emel, dt)
+        last_emel = pm
+
         # energy from source (has two outputs)
         f = U[i]
         dx = xd2[i]*dt
@@ -95,7 +124,7 @@ def EnergyFlows(yp,U,d):
         dx = xd1[i]*dt
         e2 = f*dx   # energy to M1
         # eso += f*dx
-        eso += integrate(e1+e2, deld['eso'])
+        eso += integrate(e1+e2, deld['eso'], dt)
         deld['eso'] =e1+e2
 
         # energy in LRA damper
@@ -103,35 +132,35 @@ def EnergyFlows(yp,U,d):
         f  = dx21*d['B1']   # damping force
         dx = dx21*dt   # length change
         # eld += f*dx
-        eld += integrate(f*dx, deld['eld'])
+        eld += integrate(f*dx, deld['eld'], dt)
         deld['eld'] = f*dx
 
         # energy into LRA mass
         f = -U[i]
         dx = xd1[i] * dt
         # elm += f*dx
-        elm += integrate(f*dx, deld['elm'])
+        elm += integrate(f*dx, deld['elm'], dt)
         deld['elm'] =   f*dx
 
         # energy to case
         f = U[i]
         dx = xd2[i]*dt
         # eca += f*dx
-        eca += integrate(f*dx, deld['eca'])
+        eca += integrate(f*dx, deld['eca'], dt)
         deld['eca'] =    f*dx
 
         # dissipation in Bskin
         f = d['B3']*xd3[i]
         dx = xd3[i]*dt
         # ebs += f*dx
-        ebs += integrate(f*dx, deld['ebs'])
+        ebs += integrate(f*dx, deld['ebs'], dt)
         deld['ebs'] =    f*dx
 
         # energy to skin
         f = d['K2']*(x2[i]-x3[i])
         dx = xd2[i]*dt
         # esk1 += f*dxs
-        esk1 += integrate(f*dx, deld['esk1'])
+        esk1 += integrate(f*dx, deld['esk1'], dt)
         deld['esk1'] =    f*dx
 
 
@@ -146,11 +175,11 @@ def EnergyFlows(yp,U,d):
     # print(f'EnergyFLows:\n   Energy integration: {intmeth}')
     # print(f'    (time range: last {100*timerange}%)')
 
-    return (eso, eca, elm, eld, ebs, esk1, Etot)
+    return (eso, eca, elm, eld, ebs, esk1, emel, Etot)
 
 
 
-def LeakReport(eso, eca, elm, eld, ebs, esk1, Etot,yp):
+def LeakReport(eso, eca, elm, eld, ebs, esk1, emel, Etot,yp):
     # for forced_response
     x1  =  yp[0][:]   # MKS to mm
     x3  =  yp[4][:]
@@ -159,17 +188,18 @@ def LeakReport(eso, eca, elm, eld, ebs, esk1, Etot,yp):
     #
     print(f'Oscillation Amplitudes (rms):  LRA: {RMS(1000*x1,timerange):.3e}mm Skin: {1000*RMS(x3,timerange):.3e}mm')
 
-    print(f'     Source energy (eso): {eso:.3e}\nSource flows:')
-    print(f'           to Case (eca): {eca:.3e}')
-    print(f'       to LRA mass (elm): {elm:.3e}')
-    print(f'                   total: {eca+elm:.3e}\n')
+    print(f'        Source energy (eso): {eso:.3e}\nSource flows:')
+    print(f'              to Case (eca): {eca:.3e}')
+    print(f'          to LRA mass (elm): {elm:.3e}')
+    print(f'                      total: {eca+elm:.3e}\n')
 
     print(f'Energy sinks:')
-    print(f'   LRA dissipation (eld): {eld:.3e}')
-    print(f'  skin dissipation (ebs): {ebs:.3e}')
-    print(f'                   total: {eld+ebs:.3e}\n')
-    print(f'   output to skin (esk1): {esk1}')
-    print(f'kinetic+potential (Etot): {Etot:.3e}')
+    print(f'motor resistive loss (emel): {emel:.3e}')
+    print(f'      LRA dissipation (eld): {eld:.3e}')
+    print(f'     skin dissipation (ebs): {ebs:.3e}')
+    print(f'                      total: {eld+ebs:.3e}\n')
+    print(f'      output to skin (esk1): {esk1}')
+    print(f'   kinetic+potential (Etot): {Etot:.3e}')
 
 
     leakage = eso-(eld+ebs)
