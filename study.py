@@ -37,7 +37,8 @@ studyNameLegends = {'plot':'StudyPlot',
                     'ee':'Energy Efficiency (%)',
                     'gain':'Amplitude Ratio (x3/x1)',
                     'fgain':'Skin amplitude / LRA force',
-                    'emel':'Motor Electric Loss (J)'
+                    'emel':'Motor Electric Loss (J)',
+                    'srms':'RMS Skin Displacement (mm)'
                         }
 
 
@@ -285,21 +286,25 @@ for w in wVals:
         if sd['studytype'] == 'gain':  # skin deformation vs LRA mass deflection
             # print(f'Amplitudes: LRA: {1000*a1:f}mm   Skin: {1000*a2:f}mm')
             heatDataPt = a3/a1
-        if sd['studytype'] == 'fgain':
+        elif sd['studytype'] == 'fgain':
             heatDataPt = a3/np.max(U)    #  skin amplitude / LRA force
-        if sd['studytype'] == 'ee':
+        elif sd['studytype'] == 'ee':
             heatDataPt = 100 * ebs/eso  # skin damper diss / actuator source output
-        if sd['studytype'] == 'leakage':
+        elif sd['studytype'] == 'leakage':
             heatDataPt = plk
-        if sd['studytype'] == 'eout':
+        elif sd['studytype'] == 'eout':
             heatDataPt = eso
-        if sd['studytype'] == 'ebs':
+        elif sd['studytype'] == 'ebs':
             heatDataPt = ebs
-        if sd['studytype'] == 'esk1':
+        elif sd['studytype'] == 'esk1':
             heatDataPt = esk1
-        if sd['studytype'] == 'emel':
-            print('emel: ', emel)
+        elif sd['studytype'] == 'emel':
             heatDataPt = emel
+        elif sd['studytype'] == 'srms':
+            heatDataPt = 1000 * LRA.RMS(yp[4], LRA.timerange)
+        else:
+            error('Unknown study type: ',sd['studytype'])
+        # store the heatmap square
         RepHeatmap(w_norm, zetaLRA, dataf, heatDataPt)
 
 print('output map:', fname)

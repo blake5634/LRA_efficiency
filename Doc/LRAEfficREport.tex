@@ -4,6 +4,8 @@
 \usepackage{listings}
 \usepackage{tikz}
 
+\usepackage{natbib}
+
 \usetikzlibrary{decorations.pathmorphing, positioning, arrows.meta, patterns, calc, decorations.markings}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
@@ -103,12 +105,52 @@ attempt to answer are:
 \end{enumerate}
 
 
-\paragraph{Context}
+\paragraph{Context and Related Work}
 
-    Widespread intuition that there is efficiency at resonance
+In the US patent literature, there are multiple claims that resonant systems are ``more efficent."
+For example, \cite{elenga2014linear, elenga2018linear} state,
+\begin{quotation}
+``In a linear-resonant vibration module, discussed above, by
+maintaining device operation at a resonant frequency , the
+linear -resonant vibration module is a relatively high - Q
+device , and generally operates more efficiently to produce a
+given vibration amplitude than a low - Q device."
+\end{quotation}
+\cite{Pepin2010linear} describes a linear resonant vibration motor (LVRM) where
+\begin{quotation}
+``Combining a linearly oscillating vibration-inducing mechanism with feedback control, so that the
+frequency of vibration falls close to the resonant frequency of the
+LRVM, results in optimal power consumption
+with respect to the amplitude and frequency."
+\end{quotation}
+And \cite{Izumi2005Resonant} claims
+\begin{quotation} ``In a driving unit for driving such resonance system,
+it is most energy efficient when the moving element
+reciprocates under a resonant condition where the reciprocating
+motion of the moving element is Synchronous with a natural
+frequency determined by a mass of the moving element and
+an elasticity of the elastic body."
+\end{quotation}
 
-    Citations to claims of energy efficiency
+In the peer reviewed literature there is little work on efficiency of LRAs for haptics.
+\cite{kato2018characteristic} Added parallel capacitance to a LRA which created an
+electro-mechanical resonance which was more efficient under higher external force loads.
+\cite{lindsay2013improving} optimized the vibration amplitude at the skin with
+an impedance matching network by both simulation and experiment,
+but did not study energy efficiency.
 
+A related area with significant relevant work is energy harvesting.
+Chen and Fan \cite{chen2023internal} survey the literature related to
+building resonant systems which optimize the collection
+of energy from ambient environments where ambient  energy such as vibrations are concentrated around
+one or more frequencies.
+
+In another relevant area, wireless power transmission (WPT), \cite{yamaguchi2014resonance}
+illustrates that while power transmission is maximized at the resonance frequency of a
+receiver, efficiency (received energy over transmitted energy) is not.
+
+In the context of LRAs driving a device to vibrate against human skin, we therefore pose
+the following questions:
 
 %%%%** Section 1 
 \section{Q1: What is a useful dynamical model and simulation for such a system? What are some reasonable parameter values?}
@@ -406,12 +448,12 @@ systems ($\zeta \to 1.0$).
 
 %%%%** Figure 2 
 \begin{figure}
-\includegraphics[width=0.35\textwidth]{heatmapleakage_11x11.png}
+\includegraphics[width=0.6\textwidth]{heatmapleakage_11x11.png}
 \caption{}\label{EleakFig}
 \end{figure}
 
 
-Energy delivered to the skin (Figure \ref{SkinEFig}) has its highest value at the resonant
+Energy delivered to the skin (Figure \ref{SkinEFig}, Left) has its highest value at the resonant
 frequency ($\omega=\omega_n$) and with the lowest value of
 $\zeta$ as expected, but also interestingly shows higher outputs
 just below the $\omega_n$ than just above it.  Typically this is expected
@@ -419,48 +461,51 @@ due to the damped natural frequency, $\omega_d$ being equal to $\zeta\omega_n$ (
 
 
 
-%%%%** Figure 3 
-\begin{figure}
-\includegraphics[width=0.35\textwidth]{heatmap_SkinE_11x11.png}
-\caption{}\label{SkinEFig}
-\end{figure}
-
-Actuator energy output  (Figure \ref{EoutFig}) shows a similar pattern to skin energy,
+\clearpage
+Actuator energy output  (Figure \ref{EoutFig}, Right) shows a similar pattern to skin energy,
 sharply peaking at the resonant frequency.
 
 
-%%%%** Figure 4 
+Now we address efficiency: $ee$ in terms of energy to skin vs. actuator output energy.
+Energy efficiency depends strongly on $\zeta$ with the highest efficiency shown for
+the lowest $\zeta$(Figure \ref{EEficFig}, Left).
+This may be intuitive since low $\zeta$ indicates relatively low
+damping.   There is no apparent efficiency effect of operating at  or near resonance,
+but efficiency is slightly higher (0.134) at the lowest frequency ($0.95\omega_n$)
+than at the highest (0.1212 at $1.05\omega_n$).
+
+
+%%%%** Figure 3
 \begin{figure}
-\includegraphics[width=0.35\textwidth]{heatmap_actOutput_11x11.png}
-\caption{}\label{EoutFig}
+\includegraphics[width=0.5\textwidth]{heatmap_SkinE_11x11.png}
+\includegraphics[width=0.5\textwidth]{heatmap_actOutput_11x11.png}
+\caption{}\label{SkinEFig}\label{EoutFig}
 \end{figure}
 
-{\bf RE-WRITE in view of latest plots: }
-Now we address efficiency: $ee$ in terms of energy to skin vs. actuator output energy
-(Figure \ref{EEficFig}).
+ Next we look at ``Gain'', the ratio of skin displacement magnitude to LRA mass displacement
+(Figure \ref{GainFig}, Right).
+This is another plot with a striking lack of resonance effect.  Output amplitude
+vs LRA mass motion ($x_3/x_1$) increases very slightly as frequency drops, but
+increases over about a 2:1 range as $\zeta$ varies from 0.01 to 1.0.
 
-
-
-%%%%** Figure 5 
-\begin{figure}
-\includegraphics[width=0.35\textwidth]{heatmap_ee_11x11.png}
-\caption{}\label{EEficFig}
+%%%%** Figure 4
+\begin{figure}[b]
+\includegraphics[width=0.5\textwidth]{heatmap_ee_11x11.png}
+\includegraphics[width=0.5\textwidth]{heatmap_gain_11x11.png}
+\caption{}\label{EEficFig}\label{GainFig}
 \end{figure}
 
 
-{\bf RE-WRITE in view of latest plots: }
-Next we look at ``Gain'', the ratio of skin displacement magnitude to LRA mass displacement
-(Figure \ref{GainFig}).  {\bf As of now,} this is a very anomalous result in which the
-gain gets lower as damping gets lower.
-
+Finally, we plot the   RMS skin displacement against frequency and damping (Figure \ref{RMSFig}).
+Skin displacement is maximized (0.033mm) at the resonant frequency.   {\bf CHECK THIS:} Interestingly this appears
+with less of a shift to $\omega_d$ than seen in the skin damper dissipation plot (Figure \ref{SkinEFig}, Left)
+or the actuator energy output (Figure \ref{EoutFig}, Right).
 
 %%%%** Figure 6 
 \begin{figure}
-\includegraphics[width=0.35\textwidth]{heatmap_gain_11x11.png}
-\caption{}\label{GainFig}
+\includegraphics[width=0.6\textwidth]{heatmap_RMSskin_11x11.png}
+\caption{}\label{RMSFig}
 \end{figure}
-
-
 
 \clearpage
 \newpage\section*{Appendix: Derivation of mathematical model}
@@ -583,8 +628,15 @@ f
 \]
 
 %
+
+\newpage
+\bibliographystyle{plain}
+\bibliography{lraBib}
+
+
+\newpage
+
 %   Code Listings below
 \input{pythonListings}
-
 
 \end{document}
